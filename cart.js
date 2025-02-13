@@ -1,16 +1,20 @@
-// JavaScript for Shopping Cart
 document.addEventListener("DOMContentLoaded", () => {
     const cartIcon = document.querySelector(".cart");
     const cartCount = document.querySelector(".cart-count");
     const cartPage = document.querySelector(".cart-page");
     const cartItemsList = document.querySelector(".cart-items");
     const closeCartButton = document.querySelector(".close-cart");
+    const purchaseCartButton = document.querySelector(".purchase-cart");
+    const purchaseForm = document.querySelector(".purchase-form");
+    const totalAmountSpan = document.querySelector(".total-amount");
+    const form = document.getElementById("purchase-form");
 
     let cart = [];
 
     // Update cart count
     function updateCartCount() {
-        cartCount.textContent = cart.length;
+        const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+        cartCount.textContent = totalItems;
     }
 
     // Render cart items
@@ -21,12 +25,18 @@ document.addEventListener("DOMContentLoaded", () => {
             li.innerHTML = `
                 <span>
                     <img src="${item.image}" alt="${item.name}" width="30">
-                    ${item.name} - ${item.price} ETB
+                    ${item.name} - ${item.price} ETB 
+                    <strong>(${item.quantity})</strong>
                 </span>
                 <button class="remove-item" data-id="${item.id}">Remove</button>
             `;
             cartItemsList.appendChild(li);
         });
+    }
+
+    // Calculate total amount
+    function calculateTotalAmount() {
+        return cart.reduce((total, item) => total + item.price * item.quantity, 0);
     }
 
     // Add product to cart
@@ -36,18 +46,20 @@ document.addEventListener("DOMContentLoaded", () => {
             const productData = {
                 id: product.dataset.id,
                 name: product.dataset.name,
-                price: product.dataset.price,
-                image: product.dataset.image
+                price: parseFloat(product.dataset.price),
+                image: product.dataset.image,
+                quantity: 1
             };
 
             // Check if item is already in cart
-            if (!cart.some(item => item.id === productData.id)) {
-                cart.push(productData);
-                updateCartCount();
-            } 
-            else {
-                alert("Item is already in the cart!");
+            const existingItem = cart.find(item => item.id === productData.id);
+            if (existingItem) {
+                existingItem.quantity += 1; // Increment quantity
+            } else {
+                cart.push(productData); // Add new item
             }
+
+            updateCartCount();
         });
     });
 
@@ -55,10 +67,41 @@ document.addEventListener("DOMContentLoaded", () => {
     cartIcon.addEventListener("click", () => {
         renderCartItems();
         cartPage.classList.remove("hidden");
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth" // Smooth scrolling animation
+        });
     });
 
     // Close cart page
     closeCartButton.addEventListener("click", () => {
+        cartPage.classList.add("hidden");
+        purchaseForm.classList.add("hidden");
+    });
+
+    // Show purchase form
+    purchaseCartButton.addEventListener("click", () => {
+        const totalAmount = calculateTotalAmount();
+        
+        totalAmountSpan.textContent = totalAmount.toFixed(2);
+       
+        purchaseCartButton.style.display="inline-block";
+       
+
+    });
+
+    // Handle form submission
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        
+
+        alert(`THANK YOU FOR CHOOSING MARAKI\nPurchase successful!\nTotal: ${calculateTotalAmount().toFixed(2)} ETB`);
+        // Reset cart and form
+        cart = [];
+        updateCartCount();
+        renderCartItems();
+        form.reset();
+        purchaseForm.classList.add("hidden");
         cartPage.classList.add("hidden");
     });
 
@@ -71,4 +114,5 @@ document.addEventListener("DOMContentLoaded", () => {
             renderCartItems();
         }
     });
+
 });
